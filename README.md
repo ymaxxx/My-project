@@ -1,9 +1,12 @@
-# My-project
-Programming project
-# 手写数字识别 Handwritten Digit Recognizer
 
+# 手写数字识别 Handwritten Digit Recognizer 手書き数字認識
 这是一个前后端简单 Demo，可以让用户在浏览器上手写数字，并由 Python 后端识别。
+これは、ウェブページ上でユーザーがマウスで数字を描き、その画像データを処理して、最終的にPythonプログラムが手書き数字を認識し、結果をHTMLに返すというシンプルなプロジェクトです。
+## 
+実行方法：GitHubのCodespacesでの実行をおすすめします。まず、すべてのファイルをCodespacesにインポートし、backendフォルダに移動します。ターミナルで以下のコマンドを実行してください：
 
-## 运行方式
+pip install -r requirements.txt
+依存関係のインストールが完了したら、現在のフォルダで以下のコマンドを実行します：
 
-### 1. 安装依赖
+python app.py
+その後、ポート経由でHTMLを開けば、マウスで手書きの数字を入力して使うことができます。
