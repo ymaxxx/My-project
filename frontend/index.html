@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>手写数字识别</title>
+    <style>
+        canvas {
+            border: 1px solid black;
+            touch-action: none;
+        }
+    </style>
+</head>
+<body>
+
+<h2>手写数字识别 Demo</h2>
+
+<canvas id="canvas" width="280" height="280"></canvas><br>
+<button onclick="clearCanvas()">清空</button>
+<button onclick="send()">识别</button>
+
+<p id="result"></p>
+
+<script>
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+
+let drawing = false;
+
+canvas.addEventListener("mousedown", () => drawing = true);
+canvas.addEventListener("mouseup", () => drawing = false);
+canvas.addEventListener("mousemove", draw);
+
+canvas.addEventListener("touchstart", e => { drawing=true; });
+canvas.addEventListener("touchend", e => { drawing=false; });
+canvas.addEventListener("touchmove", e => {
+    e.preventDefault();
+    const rect = canvas.getBoundingClientRect();
+    const x = e.touches[0].clientX - rect.left;
+    const y = e.touches[0].clientY - rect.top;
+    draw({offsetX: x, offsetY: y});
+});
+
+function draw(e) {
+    if (!drawing) return;
+    ctx.fillStyle = "black";
+    ctx.beginPath();
+    ctx.arc(e.offsetX, e.offsetY, 12, 0, Math.PI * 2);
+    ctx.fill();
+}
+
+function clearCanvas(){
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+}
+
+function send(){
+    const dataURL = canvas.toDataURL("image/png");
+    fetch("http://localhost:5000/predict", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({image: dataURL})
+    })
+    .then(r => r.json())
+    .then(d => document.getElementById("result").innerText = "识别结果: " + d.result);
+}
+</script>
+
+</body>
+</html>
