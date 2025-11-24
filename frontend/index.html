@@ -7,6 +7,7 @@
         canvas {
             border: 1px solid black;
             touch-action: none;
+            background: black;
         }
     </style>
 </head>
@@ -24,43 +25,61 @@
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
+// 初始化为黑底
+ctx.fillStyle = 'black';
+ctx.fillRect(0, 0, canvas.width, canvas.height);
+
 let drawing = false;
 
-canvas.addEventListener("mousedown", () => drawing = true);
-canvas.addEventListener("mouseup", () => drawing = false);
-canvas.addEventListener("mousemove", draw);
-
-canvas.addEventListener("touchstart", e => { drawing=true; });
-canvas.addEventListener("touchend", e => { drawing=false; });
-canvas.addEventListener("touchmove", e => {
-    e.preventDefault();
-    const rect = canvas.getBoundingClientRect();
-    const x = e.touches[0].clientX - rect.left;
-    const y = e.touches[0].clientY - rect.top;
-    draw({offsetX: x, offsetY: y});
-});
+// 支持 pointer 事件，兼容鼠标和触摸
+canvas.addEventListener('pointerdown', (e) => { drawing = true; draw(e); });
+canvas.addEventListener('pointerup', () => drawing = false);
+canvas.addEventListener('pointercancel', () => drawing = false);
+canvas.addEventListener('pointermove', draw);
 
 function draw(e) {
     if (!drawing) return;
-    ctx.fillStyle = "black";
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    ctx.fillStyle = 'white';
     ctx.beginPath();
-    ctx.arc(e.offsetX, e.offsetY, 12, 0, Math.PI * 2);
+    ctx.arc(x, y, 12, 0, Math.PI * 2);
     ctx.fill();
 }
 
 function clearCanvas(){
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // 重置为黑底
+    ctx.fillStyle = 'black';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 }
 
-function send(){
-    const dataURL = canvas.toDataURL("image/png");
-    fetch("http://localhost:5000/predict", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({image: dataURL})
-    })
-    .then(r => r.json())
-    .then(d => document.getElementById("result").innerText = "识别结果: " + d.result);
+async function send(){
+    const resultEl = document.getElementById('result');
+    resultEl.innerText = '正在识别...';
+
+    const dataURL = canvas.toDataURL('image/png');
+    try {
+        const resp = await fetch('/predict', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({image: dataURL})
+        });
+
+        const data = await resp.json();
+        if (!resp.ok) {
+            resultEl.innerText = '服务返回错误: ' + (data.error || resp.statusText);
+            return;
+        }
+
+        if (data.result === undefined) {
+            resultEl.innerText = '未返回结果: ' + JSON.stringify(data);
+        } else {
+            resultEl.innerText = '识别结果: ' + data.result;
+        }
+    } catch (err) {
+        resultEl.innerText = '请求失败: ' + err.message;
+    }
 }
 </script>
 
